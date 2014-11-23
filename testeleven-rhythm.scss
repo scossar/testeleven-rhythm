@@ -1,0 +1,115 @@
+// Set base font size and line height - these can be overridden
+// before the library is imported
+
+$base-font-size: 16px !default;
+$base-line-height: $base-font-size * 1.5 !default;
+
+// By default the debug grid is not shown
+$show-baseline: true !default;
+
+// Utility functions and mixins ----------------------------
+
+// Return the base rhythm height in px for padding, margins etc.
+// A fraction of the unit can be returned by setting the $number-of-lines argument
+// to less than 1.
+@function rhythm($number-of-lines: 1) {
+  @return $base-line-height * $number-of-lines;
+}
+
+// font-size
+// outputs the font-size in px and in rems
+@mixin font-size($font-size) {
+  font-size: $font-size;
+  font-size: px-to-rem($font-size);
+}
+
+// Helper function to return the line height for a given font size. If
+// half-lines is set to true it will line up with the nearest half line.
+
+@function get-line-height($font-size, $half-lines: false, $num-lines: 1) {
+
+  // Get either the base-line-height or half the base-line-height
+  $base-height: if($half-lines,
+                   $base-line-height / 2,
+                   $base-line-height);
+
+  // Get the total number of lines, or half lines, required to accomodate
+  // the font size.
+  $num-lines: ceil($font-size / $base-height);
+  // Get the total height for the new font size.
+  $total-height: $num-lines * $base-height;
+  // Get the line height required to create that height from the given font size
+  $line-height: $total-height / $font-size;
+
+  @return $line-height;
+}
+
+// rhythm-margin-for-height
+// Returns the mmargin to be added to top and bottom to make an element of
+// a given size fit into the vertical rhythm.
+@function rhythm-margin-for-height($height) {
+  $number-of-rhythm-units: ceil($height / $base-line-height);
+  $required-height: $number-of-rhythm-units * $base-line-height;
+  $total-margin: $required-height - $height;
+
+  @return $total-margin / 2;
+}
+
+// Core functions ---------------------------------------------
+
+// Establishes body font size in rem with a px fallback, and line height.
+// If $show-baseline is true it grabs a background image from:
+// http://basehold.it/
+
+@mixin establish-baseline() {
+  html {
+    font-size: $base-font-size;
+    font-size: px-to-rem($base-font-size);
+    line-height: $base-line-height / $base-font-size;
+
+    @if $show-baseline == true {
+      // strip unit is included from utility functions
+      $baseline-size: strip-unit($base-line-height);
+      background-image: url(http://basehold.it/i/#{$baseline-size});
+    }
+  }
+  * {
+    margin: 0;
+    padding: 0;
+  }
+}
+
+// $lines can take a ratio (number of base lines/number of adjusted lines)
+// and will match up with the base rhythm in accordance with that ratio
+
+@mixin adjust-font-size-to($font-size, $half-lines: false, $num-lines: 1) {
+  @include font-size($font-size);
+  line-height: $num-lines * (get-line-height($font-size, $half-lines, $num-lines));
+}
+
+// rhythm-border
+// Adds a border and the appropriate amount of padding to a text element
+// to maintain the rhythm.
+@mixin rhythm-border($position, $width, $style: solid, $lines: 1) {
+  $padding-in-px: rhythm($lines) - $width;
+  $padding-in-rem: px-to-rem($padding-in-px);
+  $border-width-in-rem: px-to-rem($width);
+
+  border-#{$position}: $width $style;
+  border-#{$position}: $border-width-in-rem $style;
+  padding-#{$position}: $padding-in-px;
+  padding-#{$position}: $padding-in-rem;
+}
+
+
+// Add borders to all sides of an element with padding used to maintain rhythm.
+@mixin rhythm-borders($width, $style: solid, $lines: 1) {
+    $padding-in-px: rhythm($lines) - $width;
+    $padding-in-rem: px-to-rem($padding-in-px);
+    $width-in-rem: px-to-rem($width);
+
+    border: $width $style;
+    border: $width-in-rem $style;
+    padding: $padding-in-px;
+    padding: $padding-in-rem;
+}
